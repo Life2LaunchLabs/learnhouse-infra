@@ -12,19 +12,24 @@ echo "LearnHouse Droplet Setup"
 echo "========================"
 echo ""
 
-read -rp "Domain (e.g. learn.yourdomain.com): " DOMAIN </dev/tty
+read -rp "Domain (or IP.sslip.io if no domain yet): " DOMAIN </dev/tty
 while [[ -z "$DOMAIN" ]]; do
   echo "Domain is required."
   read -rp "Domain: " DOMAIN </dev/tty
 done
 
-read -rp "GitHub username (for GHCR image pull): " GHCR_USER </dev/tty
+read -rp "GitHub username: " GHCR_USER </dev/tty
 while [[ -z "$GHCR_USER" ]]; do
   echo "GitHub username is required."
   read -rp "GitHub username: " GHCR_USER </dev/tty
 done
 
-read -rsp "GitHub PAT with read:packages scope: " GHCR_PAT </dev/tty
+echo ""
+echo "Create a short-lived PAT (7 days) with read:packages scope at:"
+echo "  https://github.com/settings/tokens/new"
+echo "Delete it after setup is complete."
+echo ""
+read -rsp "GitHub PAT (temporary, for initial image pull only): " GHCR_PAT </dev/tty
 echo ""
 while [[ -z "$GHCR_PAT" ]]; do
   echo "GitHub PAT is required."
@@ -56,18 +61,17 @@ git clone https://github.com/Life2LaunchLabs/learnhouse-infra "$DEPLOY_DIR"
 
 echo "==> Configuring Caddy..."
 sed "s/your.domain.com/$DOMAIN/" "$DEPLOY_DIR/Caddyfile" > /etc/caddy/Caddyfile
-systemctl reload caddy
-
-# ── Ensure Docker is running ──────────────────────────────────────────────────
-
-echo "==> Starting Docker..."
 systemctl enable docker
 systemctl start docker
+systemctl reload caddy
 
-# ── Authenticate with GHCR ────────────────────────────────────────────────────
+# ── Pull image and immediately logout ─────────────────────────────────────────
 
-echo "==> Authenticating with GitHub Container Registry..."
+echo "==> Pulling LearnHouse image (temporary credentials)..."
 echo "$GHCR_PAT" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+docker compose -f "$DEPLOY_DIR/docker-compose.yml" pull
+docker logout ghcr.io
+echo "GHCR credentials removed. Delete your PAT at github.com/settings/tokens"
 
 # ── Create .env from example ──────────────────────────────────────────────────
 
@@ -82,7 +86,7 @@ sed -i "s/^LEARNHOUSE_ALLOWED_REGEXP=.*/LEARNHOUSE_ALLOWED_REGEXP=https:\/\/${DO
 # ── Done ──────────────────────────────────────────────────────────────────────
 
 echo ""
-echo "Setup complete. Before starting the app, fill in the remaining values in $DEPLOY_DIR/.env:"
+echo "Setup complete. Fill in the remaining values in $DEPLOY_DIR/.env:"
 echo ""
 echo "  Required:"
 echo "    LEARNHOUSE_AUTH_JWT_SECRET_KEY  (generate: python3 -c \"import secrets; print(secrets.token_urlsafe(32))\")"
@@ -93,3 +97,5 @@ echo "    LEARNHOUSE_REDIS_CONNECTION_STRING"
 echo ""
 echo "  Then start the app:"
 echo "    cd $DEPLOY_DIR && docker compose up -d"
+echo ""
+echo "  Remember to delete your temporary PAT at github.com/settings/tokens"
