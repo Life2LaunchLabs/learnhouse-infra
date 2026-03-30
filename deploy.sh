@@ -6,7 +6,8 @@ set -e
 DEPLOY_DIR=/opt/learnhouse
 
 cd "$DEPLOY_DIR"
-git pull
+git fetch origin
+git reset --hard origin/main
 docker compose pull
 docker compose up -d --remove-orphans
 docker image prune -f
