@@ -1,6 +1,6 @@
 services:
   learnhouse:
-    image: ghcr.io/learnhouse/app:prod
+    image: ghcr.io/life2launchlabs/learnhouse:prod
     restart: unless-stopped
     ports:
       - "80:80"

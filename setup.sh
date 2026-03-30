@@ -32,12 +32,10 @@ echo "========================"
 echo ""
 
 DROPLET_IP=$(curl -sf http://169.254.169.254/metadata/v1/interfaces/public/0/ipv4/address || echo "")
+SSLIP_DOMAIN="${DROPLET_IP}.sslip.io"
 echo "--- Domain ---"
-if [[ -n "$DROPLET_IP" ]]; then
-  echo "  Your droplet IP is: ${DROPLET_IP}"
-  echo "  No domain yet? You can use: ${DROPLET_IP}.sslip.io"
-fi
-prompt DOMAIN "Domain"
+read -rp "Domain (or enter for ${SSLIP_DOMAIN}): " DOMAIN </dev/tty
+DOMAIN="${DOMAIN:-$SSLIP_DOMAIN}"
 
 echo ""
 echo "--- GitHub (for image pull) ---"
