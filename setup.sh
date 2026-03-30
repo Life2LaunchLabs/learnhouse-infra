@@ -58,6 +58,12 @@ echo "==> Configuring Caddy..."
 sed "s/your.domain.com/$DOMAIN/" "$DEPLOY_DIR/Caddyfile" > /etc/caddy/Caddyfile
 systemctl reload caddy
 
+# ── Ensure Docker is running ──────────────────────────────────────────────────
+
+echo "==> Starting Docker..."
+systemctl enable docker
+systemctl start docker
+
 # ── Authenticate with GHCR ────────────────────────────────────────────────────
 
 echo "==> Authenticating with GitHub Container Registry..."
